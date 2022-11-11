@@ -1,15 +1,16 @@
 import ApolloProvider from 'apollo';
-import { NotificationContainer } from 'containers';
 import LayoutProvider from 'layouts';
+import NotificationProvider from 'notifications';
 import RoutesProvider from 'router';
 
 function App() {
   return (
     <ApolloProvider>
-      <RoutesProvider>
-        <LayoutProvider />
-      </RoutesProvider>
-      <NotificationContainer />
+      <NotificationProvider>
+        <RoutesProvider>
+          <LayoutProvider />
+        </RoutesProvider>
+      </NotificationProvider>
     </ApolloProvider>
   );
 }

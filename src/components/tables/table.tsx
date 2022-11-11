@@ -1,4 +1,4 @@
-import { FC, useEffect } from 'react'
+import { FC, useCallback, useEffect } from 'react'
 import { MakeGenerics, useNavigate, useSearch } from 'react-location'
 import { usePagination } from 'react-use-pagination'
 import TableBodyComponent from './table-body'
@@ -14,23 +14,27 @@ interface TableComponentProps<TData = any> {
   renderColumns?: FC<TData>;
   renderItem?: FC<TData>;
   renderGridItem?: FC<TData>;
-  renderFilter?: FC;
-  renderExport?: FC;
+  renderFilter?: FC<{filterOpen: boolean; setFilterOpen: (val: boolean) => void}>;
+  renderExport?: FC<{exportOpen: boolean; setExportOpen: (val: boolean) => void}>;
+  renderLoader?: FC;
+  renderHeaderItems?: FC;
   headerActions?: {
     label: string;
     action: any;
   }[];
   disableUrlPagination?: boolean;
-  pagination?: {
+  initialPagination?: {
     skip?: number;
     limit?: number;
   },
   setPagination?: (
     pagination: {
-      skip?: number;
-      limit?: number;
+      skip: number;
+      limit: number;
     }
   ) => void,
+  search?: string,
+  setSearch?: (search: string) => void,
   refetch: () => void;
 }
 
@@ -41,37 +45,35 @@ type PaginationSearchGenerics = MakeGenerics<{
   }
 }>
 
-const TableComponent: FC<TableComponentProps> = ({ title, items, itemsCount, itemsLoading, renderColumns, renderItem, headerActions, renderFilter, renderGridItem, renderExport, disableUrlPagination, pagination, setPagination, refetch }) => {
+const TableComponent: FC<TableComponentProps> = ({ title, items, itemsCount, itemsLoading, renderColumns, renderItem, headerActions, renderFilter, renderGridItem, renderExport, disableUrlPagination, initialPagination, setPagination, refetch, search, setSearch, renderLoader, renderHeaderItems }) => {
 
-  const search = useSearch<PaginationSearchGenerics>();
+  const searchParams = useSearch<PaginationSearchGenerics>();
   const navigate = useNavigate<PaginationSearchGenerics>()
 
   const paginationInstance = usePagination({
-    totalItems: itemsCount,
-    initialPage: disableUrlPagination ? Math.floor((pagination?.skip ?? 0) / (pagination?.limit ?? 10)) : search.page,
-    initialPageSize: (disableUrlPagination ? pagination?.limit : search.pageSize) ?? 10
+    totalItems: itemsCount??0,
+    initialPage: disableUrlPagination ? Math.floor((initialPagination?.skip ?? 0) / (initialPagination?.limit ?? 10)) : (searchParams.page??0),
+    initialPageSize: (disableUrlPagination ? initialPagination?.limit : searchParams.pageSize) ?? 10
   })
 
-  useEffect(() => {
+  const updateUrl = useCallback(
+  () => {
     setPagination?.({
       limit: paginationInstance.pageSize,
-      skip: paginationInstance.currentPage * paginationInstance.pageSize,
+      skip: (paginationInstance.currentPage >= 0 ? paginationInstance.currentPage : 0) * paginationInstance.pageSize,
     })
-  }, [paginationInstance.currentPage, paginationInstance.pageSize])
-
-  const updateUrl = () => {
     navigate({
       search: (old) => ({
         ...old,
-        page: paginationInstance.currentPage,
+        page: paginationInstance.currentPage >= 0 ? paginationInstance.currentPage : 0,
         pageSize: paginationInstance.pageSize
       }),
     })
-  }
+  }, [navigate, paginationInstance.currentPage, paginationInstance.pageSize, setPagination])
 
   useEffect(() => {
     updateUrl()
-  }, [paginationInstance.currentPage, paginationInstance.pageSize])
+  }, [paginationInstance.currentPage, paginationInstance.pageSize, updateUrl])
 
   return (
     <div className="space-y-6">
@@ -84,16 +86,22 @@ const TableComponent: FC<TableComponentProps> = ({ title, items, itemsCount, ite
         setPageSize={paginationInstance.setPageSize}
         pageSize={paginationInstance.pageSize}
         refetch={refetch}
+        search={search}
+        renderHeaderItems={renderHeaderItems}
+        setSearch={setSearch}
       />
-      {(!itemsLoading && itemsCount === 0) ? (
+      {((!itemsLoading) && (itemsCount === 0)) ? (
         <TableEmptyComponent
 
         />
       ) : (
         <>
+
           <TableBodyComponent
             items={items}
+            itemsLoading={itemsLoading}
             renderColumns={renderColumns}
+            renderLoader={renderLoader}
             renderItem={renderItem}
           />
 

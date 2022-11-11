@@ -1,6 +1,6 @@
 import { Route } from "react-location";
 import { DashboardPage, ResetPasswordPage, SettingsPage, SigninPage, SignupPage } from "pages";
-import { CogIcon, HomeIcon } from "@heroicons/react/outline"
+import { CogIcon, HomeIcon } from "@heroicons/react/24/outline"
 
 export type RouteProps = Route & {
   withPermissions?: string[];

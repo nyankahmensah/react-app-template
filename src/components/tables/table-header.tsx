@@ -1,17 +1,18 @@
 import { FC, Fragment, useEffect, useRef, useState } from 'react'
 import {
-  SearchIcon,
-  ViewGridIcon as ViewGridIconSolid,
-  ViewListIcon,
-  FilterIcon,
-  DownloadIcon,
-  RefreshIcon,
+  MagnifyingGlassIcon,
+  Squares2X2Icon as Squares2X2IconSolid,
+  Bars4Icon,
+  FunnelIcon,
+  ArrowDownTrayIcon,
+  ArrowPathIcon,
   CheckIcon,
   ChevronDownIcon
-} from '@heroicons/react/solid'
+} from '@heroicons/react/24/solid'
 import { classNames, wrapClick, wrapOnchange } from 'utils'
 import useKeyboardJs from 'react-use/lib/useKeyboardJs';
 import { Listbox, Transition } from '@headlessui/react';
+import _ from 'lodash';
 
 interface TableHeaderComponentProps {
   title: string;
@@ -19,12 +20,15 @@ interface TableHeaderComponentProps {
     label: string;
     action: any;
   }[];
-  renderFilter?: FC;
-  renderExport?: FC;
+  renderFilter?: FC<{ filterOpen: boolean; setFilterOpen: (val: boolean) => void }>;
+  renderExport?: FC<{ exportOpen: boolean; setExportOpen: (val: boolean) => void }>;
+  renderHeaderItems?: FC;
   gridable?: boolean;
   pageSize: number;
   setPageSize: (val: number) => void;
   refetch: () => void;
+  search?: string,
+  setSearch?: (search: string) => void,
 }
 
 const limits = [
@@ -34,8 +38,10 @@ const limits = [
   100
 ]
 
-const TableHeaderComponent: FC<TableHeaderComponentProps> = ({ title, actions, renderFilter, gridable, renderExport, pageSize, setPageSize, refetch }) => {
+const TableHeaderComponent: FC<TableHeaderComponentProps> = ({ title, actions, renderFilter, gridable, renderExport, pageSize, setPageSize, refetch, search, setSearch, renderHeaderItems }) => {
 
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [searchPressed] = useKeyboardJs("command > k");
   const [escapePressed] = useKeyboardJs("esc");
   const searchRef = useRef<HTMLInputElement>(null)
@@ -50,7 +56,6 @@ const TableHeaderComponent: FC<TableHeaderComponentProps> = ({ title, actions, r
       searchRef?.current?.blur()
     }
   }, [escapePressed])
-  const [search, setSearch] = useState("")
 
 
   return (
@@ -82,14 +87,14 @@ const TableHeaderComponent: FC<TableHeaderComponentProps> = ({ title, actions, r
               type="button"
               className="p-1.5 rounded-md text-gray-500 hover:bg-white hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
             >
-              <ViewListIcon className="h-5 w-5" aria-hidden="true" />
+              <Bars4Icon className="h-5 w-5" aria-hidden="true" />
               <span className="sr-only">Use list view</span>
             </button>
             <button
               type="button"
               className="ml-0.5 bg-white p-1.5 rounded-md shadow-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
             >
-              <ViewGridIconSolid className="h-5 w-5" aria-hidden="true" />
+              <Squares2X2IconSolid className="h-5 w-5" aria-hidden="true" />
               <span className="sr-only">Use grid view</span>
             </button>
           </div>
@@ -117,92 +122,114 @@ const TableHeaderComponent: FC<TableHeaderComponentProps> = ({ title, actions, r
         <div className="hidden sm:block">
           <div className="flex items-center">
             <div className="flex-1 -mb-px flex space-x-6 xl:space-x-8" aria-label="Tabs">
-              <div className="w-1/2 relative text-gray-500 dark:text-gray-200 focus-within:text-gray-500 dark:focus-within:text-gray-300">
-                <label htmlFor="search" className="sr-only">
-                  Search Waya
-                </label>
-                <input
-                  ref={searchRef}
-                  id="search"
-                  type="search"
-                  placeholder="Search Waya"
-                  onChange={wrapOnchange(setSearch)}
-                  className="block w-full rounded-md border-gray-200 dark:border-gray-700 pl-8 py-1.5 placeholder-gray-500 dark:placeholder-gray-300 dark:text-white focus:border-gray-300 dark:focus:border-gray-600 sm:text-sm focus:ring-0 dark:bg-gray-900"
-                />
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-2">
-                  <SearchIcon className="h-5 w-5" aria-hidden="true" />
+              {_.isFunction(setSearch) && (
+                <div className="w-1/2 relative text-gray-500 dark:text-gray-200 focus-within:text-gray-500 dark:focus-within:text-gray-300">
+                  <label htmlFor="search" className="sr-only">
+                    Search {title ? _.startCase(title) : ""}
+                  </label>
+                  <input
+                    ref={searchRef}
+                    id="search"
+                    type="search"
+                    placeholder={`Search ${title ? _.startCase(title) : ""}`}
+                    onChange={wrapOnchange(setSearch)}
+                    className="block appearance-none w-full rounded-md border-gray-200 dark:border-gray-700 pl-8 py-1.5 placeholder-gray-500 dark:placeholder-gray-300 dark:text-white focus:border-gray-300 dark:focus:border-gray-600 sm:text-sm focus:ring-0 dark:bg-gray-900"
+                  />
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-2">
+                    <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  {search?.trim() === "" ? (
+                  <div className="pointer-events-none absolute inset-y-0 right-1.5 flex items-center justify-center">
+                    <span className="hidden sm:block text-gray-500 dark:text-gray-400 text-sm leading-5 py-0.5 px-1.5 border border-gray-300 dark:border-gray-600 rounded-md" style={{ opacity: 1 }}>
+                      <span className="sr-only">Press </span>
+                      <kbd className="font-sans">
+                        <abbr title="Command" className="no-underline">⌘</abbr>
+                      </kbd>
+                      <span className="sr-only"> and </span>
+                      <kbd className="font-sans">K</kbd>
+                      <span className="sr-only"> to search</span>
+                    </span>
+                  </div>
+                  ): null}
                 </div>
-                {!search && <div className="pointer-events-none absolute inset-y-0 right-1.5 flex items-center justify-center">
-                  <span className="hidden sm:block text-gray-500 dark:text-gray-400 text-sm leading-5 py-0.5 px-1.5 border border-gray-300 dark:border-gray-600 rounded-md" style={{ opacity: 1 }}>
-                    <span className="sr-only">Press </span>
-                    <kbd className="font-sans">
-                      <abbr title="Command" className="no-underline">⌘</abbr>
-                    </kbd>
-                    <span className="sr-only"> and </span>
-                    <kbd className="font-sans">K</kbd>
-                    <span className="sr-only"> to search</span>
-                  </span>
-                </div>}
-              </div>
+              )}
             </div>
+            {renderHeaderItems && renderHeaderItems({})}
             {gridable && (
               <div className="hidden ml-6 bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg items-center sm:flex">
                 <button
                   type="button"
                   className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-900 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
                 >
-                  <ViewListIcon className="h-5 w-5" aria-hidden="true" />
+                  <Bars4Icon className="h-5 w-5" aria-hidden="true" />
                   <span className="sr-only">Use list view</span>
                 </button>
                 <button
                   type="button"
                   className="ml-0.5 bg-white dark:bg-gray-900 p-1.5 rounded-md shadow-sm text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
                 >
-                  <ViewGridIconSolid className="h-5 w-5" aria-hidden="true" />
+                  <Squares2X2IconSolid className="h-5 w-5" aria-hidden="true" />
                   <span className="sr-only">Use grid view</span>
                 </button>
               </div>
             )}
-            {renderFilter ? (
+            <div className="hidden ml-3 items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 sm:flex">
+              <button
+                type="button"
+                onClick={wrapClick(refetch)}
+                className="bg-gray-100 dark:bg-gray-800 hover:bg-white dark:hover:bg-gray-900  p-1.5 rounded-md shadow-sm text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
+              >
+                <ArrowPathIcon className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">Refresh</span>
+              </button>
+            </div>
+
+            {(renderExport && renderFilter) ? (
               <div className="hidden ml-3 items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 sm:flex divide-x  divide-gray-300 dark:divide-gray-600">
                 <button
                   type="button"
+                  onClick={wrapClick(() => setFilterOpen(true))}
                   className="bg-gray-100 dark:bg-gray-800 hover:bg-white dark:hover:bg-gray-900  p-1.5 rounded-l-md shadow-sm text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
                 >
-                  <FilterIcon className="h-5 w-5" aria-hidden="true" />
+                  <FunnelIcon className="h-5 w-5" aria-hidden="true" />
                   <span className="sr-only">Filter items</span>
                 </button>
                 <button
                   type="button"
-                  onClick={wrapClick(refetch)}
+                  onClick={wrapClick(() => setExportOpen(true))}
                   className="bg-gray-100 dark:bg-gray-800 hover:bg-white dark:hover:bg-gray-900  p-1.5 rounded-r-md shadow-sm text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
                 >
-                  <RefreshIcon className="h-5 w-5" aria-hidden="true" />
-                  <span className="sr-only">Refresh</span>
+                  <ArrowDownTrayIcon className="h-5 w-5" aria-hidden="true" />
+                  <span className="sr-only">Export data</span>
                 </button>
               </div>
             ) : (
-              <div className="hidden ml-3 items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 sm:flex">
-                <button
-                  type="button"
-                  onClick={wrapClick(refetch)}
-                  className="bg-gray-100 dark:bg-gray-800 hover:bg-white dark:hover:bg-gray-900  p-1.5 rounded-md shadow-sm text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
-                >
-                  <RefreshIcon className="h-5 w-5" aria-hidden="true" />
-                  <span className="sr-only">Refresh</span>
-                </button>
-              </div>
-            )}
-            {renderExport && (
-            <div className="hidden ml-3 items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 sm:flex">
-              <button
-                type="button"
-                className="bg-gray-100 dark:bg-gray-800 hover:bg-white dark:hover:bg-gray-900  p-1.5 rounded-md shadow-sm text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
-              >
-                <DownloadIcon className="h-5 w-5" aria-hidden="true" />
-                <span className="sr-only">Export data</span>
-              </button>
-            </div>
+              <>
+                {renderFilter && (
+                  <div className="hidden ml-3 items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 sm:flex">
+                    <button
+                      type="button"
+                      onClick={wrapClick(() => setFilterOpen(true))}
+                      className="bg-gray-100 dark:bg-gray-800 hover:bg-white dark:hover:bg-gray-900  p-1.5 rounded-md shadow-sm text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
+                    >
+                      <FunnelIcon className="h-5 w-5" aria-hidden="true" />
+                      <span className="sr-only">Filter items</span>
+                    </button>
+                  </div>
+                )}
+                {renderExport && (
+                  <div className="hidden ml-3 items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 sm:flex">
+                    <button
+                      type="button"
+                      onClick={wrapClick(() => setExportOpen(true))}
+                      className="bg-gray-100 dark:bg-gray-800 hover:bg-white dark:hover:bg-gray-900  p-1.5 rounded-md shadow-sm text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500"
+                    >
+                      <ArrowDownTrayIcon className="h-5 w-5" aria-hidden="true" />
+                      <span className="sr-only">Export data</span>
+                    </button>
+                  </div>
+                )}
+              </>
             )}
 
             <div className='ml-3'>
@@ -214,7 +241,7 @@ const TableHeaderComponent: FC<TableHeaderComponentProps> = ({ title, actions, r
                       <div className="relative z-0 inline-flex shadow-sm rounded-md divide-x divide-pink-600">
                         <div className="relative bg-pink-500 items-center inline-flex px-2 border border-transparent rounded-l-lg text-white">
                           {/* <CheckIcon className="h-5 w-5" aria-hidden="true" /> */}
-                          <p className="text-sm font-medium">{pageSize} items</p>
+                          <p className="text-sm font-medium">{pageSize} items per page</p>
                         </div>
                         <Listbox.Button className="relative inline-flex items-center bg-pink-500 p-2 py-2 rounded-l-none rounded-r-lg text-sm font-medium text-white hover:bg-pink-600 focus:outline-none focus:z-10 focus:none focus:ring-offset-2 focus:ring-offset-gray-50 focus:ring-pink-500">
                           <span className="sr-only">Change limit</span>
@@ -265,6 +292,8 @@ const TableHeaderComponent: FC<TableHeaderComponentProps> = ({ title, actions, r
           </div>
         </div>
       </div>
+      {renderFilter && renderFilter({ filterOpen, setFilterOpen })}
+      {renderExport && renderExport({ exportOpen, setExportOpen })}
     </div>
   )
 }

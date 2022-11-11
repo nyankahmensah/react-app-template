@@ -1,16 +1,11 @@
 import { FC, Fragment, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { BookmarkAltIcon, FireIcon, HomeIcon, InboxIcon, MenuIcon, UserIcon, XIcon } from '@heroicons/react/outline'
+import { Bars4Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { Link, Navigate, Outlet, useLocation } from 'react-location'
-import { gql, useQuery } from "@apollo/client";
+import { gql, useReactiveVar } from "@apollo/client";
 import _ from "lodash";
 import routes from 'router/routes';
-
-const user = {
-  name: 'Emily Selman',
-  imageUrl:
-    'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-}
+import { currentTokenVar, currentUserVar } from 'apollo/cache/auth';
 
 export const GET_AUTH_Q = gql`
   query GetAuth {
@@ -21,7 +16,8 @@ export const GET_AUTH_Q = gql`
 
 const AppLayout: FC = () => {
   const location = useLocation()
-  const { data, loading } = useQuery(GET_AUTH_Q);
+  const currentUser = useReactiveVar(currentUserVar);
+  const currentToken = useReactiveVar(currentTokenVar)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = _
@@ -29,11 +25,7 @@ const AppLayout: FC = () => {
     .filter(["meta.layout", "App"])
     .value()
 
-  if (loading) {
-    // show a loader here
-    return <div>is validating token...</div>
-  }
-  else if (!data?.isLoggedIn) {
+  if (!currentToken) {
     return <Navigate
       to={"/signin"}
       search={{ redirect: location.current.href }}
@@ -82,7 +74,7 @@ const AppLayout: FC = () => {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <span className="sr-only">Close sidebar</span>
-                      <XIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                      <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
                     </button>
                   </div>
                 </Transition.Child>
@@ -116,10 +108,10 @@ const AppLayout: FC = () => {
                   <a href="#" className="flex-shrink-0 group block">
                     <div className="flex items-center">
                       <div>
-                        <img className="inline-block h-10 w-10 rounded-full" src={user.imageUrl} alt="" />
+                        <img className="inline-block h-10 w-10 rounded-full" src={currentUser.imageUrl} alt="" />
                       </div>
                       <div className="ml-3">
-                        <p className="text-base font-medium text-gray-700 group-hover:text-gray-900">{user.name}</p>
+                        <p className="text-base font-medium text-gray-700 group-hover:text-gray-900">{currentUser.name}</p>
                         <p className="text-sm font-medium text-gray-500 group-hover:text-gray-700">Account Settings</p>
                       </div>
                     </div>
@@ -167,9 +159,9 @@ const AppLayout: FC = () => {
               </div>
               <div className="flex-shrink-0 flex pb-5">
                 <a href="#" className="flex-shrink-0 w-full">
-                  <img className="block mx-auto h-10 w-10 rounded-full" src={user.imageUrl} alt="" />
+                  <img className="block mx-auto h-10 w-10 rounded-full" src={currentUser?.imageUrl} alt="" />
                   <div className="sr-only">
-                    <p>{user.name}</p>
+                    <p>{currentUser?.name}</p>
                     <p>Account settings</p>
                   </div>
                 </a>
@@ -196,7 +188,7 @@ const AppLayout: FC = () => {
                   onClick={() => setMobileMenuOpen(true)}
                 >
                   <span className="sr-only">Open sidebar</span>
-                  <MenuIcon className="h-6 w-6" aria-hidden="true" />
+                  <Bars4Icon className="h-6 w-6" aria-hidden="true" />
                 </button>
               </div>
             </div>

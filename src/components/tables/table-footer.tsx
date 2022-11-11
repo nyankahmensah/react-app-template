@@ -11,6 +11,7 @@ interface TableFooterComponentProps {
   pageSize: number;
   setNextPage: () => void;
   setPreviousPage: () => void;
+  noBorder?: boolean
 }
 
 const TableFooterComponent: FC<TableFooterComponentProps> = ({
@@ -20,11 +21,15 @@ const TableFooterComponent: FC<TableFooterComponentProps> = ({
   nextEnabled,
   setNextPage,
   previousEnabled,
-  setPreviousPage
+  setPreviousPage,
+  noBorder
 }) => {
   return (
     <nav
-      className="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border border-gray-200 dark:border-gray-700 sm:px-6 sm:rounded-lg"
+      className={classNames(
+        noBorder ? "border-0" : "border",
+        "bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between  border-gray-200 dark:border-gray-700 sm:px-6 sm:rounded-lg"
+      )}
       aria-label="Pagination"
     >
       <div className="hidden sm:block">

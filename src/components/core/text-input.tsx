@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { ExclamationCircleIcon } from '@heroicons/react/solid'
+import { ExclamationCircleIcon } from '@heroicons/react/20/solid'
 
 interface TextInputProps {
   id: string;
